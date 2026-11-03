@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ProWebLook Lead Verifier</title>
+  <style>
+    :root {
+      --pwl-blue: #0648B2;
+      --pwl-blue-dark: #043687;
+      --pwl-bg: #f8fafc;
+      --pwl-card: #ffffff;
+      --pwl-border: #e2e8f0;
+      --pwl-text: #0f172a;
+      --pwl-muted: #475569;
+      --pwl-green-bg: #ecfdf5;
+      --pwl-green-text: #065f46;
+      --pwl-red-bg: #fef2f2;
+      --pwl-red-text: #991b1b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 12px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      font-size: 13px;
+      line-height: 1.45;
+      color: var(--pwl-text);
+      background: var(--pwl-bg);
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--pwl-border);
+    }
+    .logo-badge {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--pwl-blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .header-title {
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--pwl-text);
+      margin: 0;
+    }
+    .header-sub {
+      font-size: 11px;
+      color: var(--pwl-muted);
+      margin: 0;
+    }
+    .card {
+      background: var(--pwl-card);
+      border: 1px solid var(--pwl-border);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+    .card-title {
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--pwl-muted);
+      margin: 0 0 8px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    label {
+      display: block;
+      font-weight: 500;
+      font-size: 12px;
+      margin-bottom: 4px;
+      color: var(--pwl-text);
+    }
+    input[type="password"],
+    input[type="text"],
+    select {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 13px;
+      color: var(--pwl-text);
+      background: #fff;
+      margin-bottom: 8px;
+    }
+    input:focus, select:focus {
+      outline: 2px solid rgba(6, 72, 178, 0.25);
+      border-color: var(--pwl-blue);
+    }
+    .checkbox-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 7px;
+      margin: 6px 0;
+      font-size: 12px;
+      color: var(--pwl-muted);
+      cursor: pointer;
+    }
+    .checkbox-row input {
+      margin-top: 2px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: none;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .btn-primary {
+      background: var(--pwl-blue);
+      color: #fff;
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: var(--pwl-blue-dark);
+    }
+    .btn-outline {
+      background: #fff;
+      color: var(--pwl-text);
+      border: 1px solid #cbd5e1;
+    }
+    .btn-outline:hover:not(:disabled) {
+      background: #f1f5f9;
+    }
+    .btn-danger {
+      background: var(--pwl-red-bg);
+      color: var(--pwl-red-text);
+      border: 1px solid #fecaca;
+    }
+    .btn-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .balances-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin: 8px 0;
+    }
+    .bal-box {
+      background: #f8fafc;
+      border: 1px solid var(--pwl-border);
+      border-radius: 8px;
+      padding: 7px 6px;
+      text-align: center;
+    }
+    .bal-num {
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--pwl-blue);
+      display: block;
+    }
+    .bal-lbl {
+      font-size: 10px;
+      color: var(--pwl-muted);
+      text-transform: uppercase;
+    }
+    .status-banner {
+      display: none;
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      margin-bottom: 10px;
+      word-break: break-word;
+    }
+    .status-banner.ok {
+      display: block;
+      background: var(--pwl-green-bg);
+      color: var(--pwl-green-text);
+      border: 1px solid #a7f3d0;
+    }
+    .status-banner.err {
+      display: block;
+      background: var(--pwl-red-bg);
+      color: var(--pwl-red-text);
+      border: 1px solid #fecaca;
+    }
+    .progress-wrap {
+      display: none;
+      margin-top: 10px;
+    }
+    .progress-track {
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 5px;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--pwl-blue);
+      transition: width 0.2s ease;
+    }
+    .progress-text {
+      font-size: 11px;
+      color: var(--pwl-muted);
+      display: flex;
+      justify-content: space-between;
+    }
+    .formula-item {
+      background: #f8fafc;
+      border: 1px solid var(--pwl-border);
+      border-radius: 6px;
+      padding: 6px 8px;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .formula-code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 11px;
+      color: #1e293b;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .copy-btn {
+      font-size: 11px;
+      padding: 3px 7px;
+      border-radius: 4px;
+      border: 1px solid #cbd5e1;
+      background: #fff;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .help-link {
+      color: var(--pwl-blue);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .help-link:hover {
+      text-decoration: underline;
+    }
+    .muted-note {
+      font-size: 11px;
+      color: var(--pwl-muted);
+      margin: 4px 0 0 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo-badge" aria-hidden="true">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <path d="M9 12.75L11.25 15L15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div>
+      <p class="header-title">ProWebLook</p>
+      <p class="header-sub">Email, Phone &amp; WhatsApp Lead Verifier</p>
+    </div>
+  </div>
+
+  <div id="banner" class="status-banner"></div>
+
+  <!-- 1. AUTHENTICATION & CREDITS CARD -->
+  <div class="card">
+    <div class="card-title">
+      <span>1. Account &amp; Credits</span>
+      <span id="connBadge" style="font-size:11px;text-transform:none;font-weight:600;color:#64748b;">Checking...</span>
+    </div>
+
+    <div id="disconnectedView" style="display:none;">
+      <label for="apiKeyInput">ProWebLook API Key</label>
+      <input id="apiKeyInput" type="password" placeholder="Paste API Key from My Profile" autocomplete="off">
+      <label class="checkbox-row">
+        <input id="enableFormulasConnect" type="checkbox" checked>
+        <span>Enable <code>=PROWEBLOOK_...</code> sheet formulas in this spreadsheet <span style="display:block;font-size:10.5px;">(Uncheck on shared sheets to restrict key to Sidebar Bulk Verify only.)</span></span>
+      </label>
+      <button id="connectBtn" class="btn btn-primary" onclick="handleConnect()">Connect Account</button>
+      <p class="muted-note" style="margin-top:8px;">
+        Get your API key at <a class="help-link" href="https://proweblook.com/user/my_profile" target="_blank" rel="noopener">proweblook.com/user/my_profile</a>
+      </p>
+    </div>
+
+    <div id="connectedView" style="display:none;">
+      <div style="font-size:12px;margin-bottom:6px;">
+        <strong id="acctEmail">Connected</strong>
+        <span id="maskedKey" style="color:#64748b;font-size:11px;display:block;"></span>
+      </div>
+      <div class="balances-grid">
+        <div class="bal-box">
+          <span id="balEmail" class="bal-num">—</span>
+          <span class="bal-lbl">Email</span>
+        </div>
+        <div class="bal-box">
+          <span id="balPhone" class="bal-num">—</span>
+          <span class="bal-lbl">Phone</span>
+        </div>
+        <div class="bal-box">
+          <span id="balWa" class="bal-num">—</span>
+          <span class="bal-lbl">WhatsApp</span>
+        </div>
+      </div>
+      <label class="checkbox-row">
+        <input id="enableFormulasToggle" type="checkbox" onchange="handleFormulaToggle(this.checked)">
+        <span>Allow <code>=PROWEBLOOK_...</code> formulas in this sheet</span>
+      </label>
+      <div class="btn-row">
+        <button id="refreshBtn" class="btn btn-outline" onclick="loadState(true)">Refresh</button>
+        <button id="disconnectBtn" class="btn btn-danger" onclick="handleDisconnect()">Disconnect</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. BULK VERIFIER CARD -->
+  <div class="card">
+    <div class="card-title">
+      <span>2. Bulk Verify Selection</span>
+    </div>
+    <p class="muted-note" style="margin:0 0 8px 0;">
+      Highlight a single column of leads (e.g. <code>B2:B200</code>). Permanent results are written to the columns on the right — zero re-runs on sheet reload.
+    </p>
+
+    <label for="bulkOp">Verification Action</label>
+    <select id="bulkOp" onchange="toggleCountryField()">
+      <option value="verify_email">Verify Email Addresses (2 cols)</option>
+      <option value="validate_phone">Validate Phone Numbers (5 cols)</option>
+      <option value="check_whatsapp">Check WhatsApp Registration (3 cols)</option>
+    </select>
+
+    <div id="countryWrap" style="display:none;">
+      <label for="countryInput">Default Country Code (Optional ISO-2)</label>
+      <input id="countryInput" type="text" maxlength="2" placeholder="e.g. US, GB, IN (leave blank for +E.164)">
+    </div>
+
+    <label class="checkbox-row">
+      <input id="hasHeaderChk" type="checkbox">
+      <span>First selected cell is a header row</span>
+    </label>
+    <label class="checkbox-row">
+      <input id="skipExistingChk" type="checkbox" checked>
+      <span>Skip rows that already have a verdict</span>
+    </label>
+
+    <div class="btn-row">
+      <button id="runBulkBtn" class="btn btn-primary" onclick="startBulkRun()">Verify Selected Cells</button>
+      <button id="stopBulkBtn" class="btn btn-outline" style="display:none;width:45%;" onclick="stopBulkRun()">Stop</button>
+    </div>
+
+    <div id="progressWrap" class="progress-wrap">
+      <div class="progress-track">
+        <div id="progressFill" class="progress-fill"></div>
+      </div>
+      <div class="progress-text">
+        <span id="progressLabel">Starting...</span>
+        <span id="progressPct">0%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. FORMULAS & STARTER DEMO -->
+  <div class="card">
+    <div class="card-title">
+      <span>3. Sheet Formulas</span>
+    </div>
+    <div class="formula-item">
+      <span class="formula-code">=PROWEBLOOK_VERIFY_EMAIL(A2)</span>
+      <button class="copy-btn" onclick="copyText('=PROWEBLOOK_VERIFY_EMAIL(A2)', this)">Copy</button>
+    </div>
+    <div class="formula-item">
+      <span class="formula-code">=PROWEBLOOK_VALIDATE_PHONE(B2, "US", TRUE)</span>
+      <button class="copy-btn" onclick="copyText('=PROWEBLOOK_VALIDATE_PHONE(B2, &quot;US&quot;, TRUE)', this)">Copy</button>
+    </div>
+    <div class="formula-item">
+      <span class="formula-code">=PROWEBLOOK_WHATSAPP(B2)</span>
+      <button class="copy-btn" onclick="copyText('=PROWEBLOOK_WHATSAPP(B2)', this)">Copy</button>
+    </div>
+    <button class="btn btn-outline" style="margin-top:6px;" onclick="handleInsertDemo()">Insert Sample Lead Sheet</button>
+  </div>
+
+  <script>
+    var stopRequested = false;
+
+    function showBanner(msg, isError) {
+      var el = document.getElementById('banner');
+      if (!msg) {
+        el.className = 'status-banner';
+        el.textContent = '';
+        return;
+      }
+      el.className = 'status-banner ' + (isError ? 'err' : 'ok');
+      el.textContent = msg;
+    }
+
+    function toggleCountryField() {
+      var op = document.getElementById('bulkOp').value;
+      document.getElementById('countryWrap').style.display = op === 'validate_phone' ? 'block' : 'none';
+    }
+
+    function renderBalances(balances) {
+      if (!balances) return;
+      document.getElementById('acctEmail').textContent = balances.account_email || 'ProWebLook Account';
+      document.getElementById('balEmail').textContent = balances.email ? Number(balances.email.amount).toLocaleString() : '0';
+      document.getElementById('balPhone').textContent = balances.phone ? Number(balances.phone.amount).toLocaleString() : '0';
+      document.getElementById('balWa').textContent = balances.whatsapp ? Number(balances.whatsapp.amount).toLocaleString() : '0';
+    }
+
+    function applyState(state) {
+      var connBadge = document.getElementById('connBadge');
+      var disView = document.getElementById('disconnectedView');
+      var conView = document.getElementById('connectedView');
+
+      if (state && state.connected) {
+        connBadge.textContent = 'Connected';
+        connBadge.style.color = '#059669';
+        disView.style.display = 'none';
+        conView.style.display = 'block';
+        document.getElementById('maskedKey').textContent = 'Key: ' + (state.maskedKey || '');
+        document.getElementById('enableFormulasToggle').checked = Boolean(state.formulasEnabled);
+        renderBalances(state.balances);
+      } else {
+        connBadge.textContent = 'Not connected';
+        connBadge.style.color = '#64748b';
+        disView.style.display = 'block';
+        conView.style.display = 'none';
+        if (state && state.error) {
+          showBanner(state.error, true);
+        }
+      }
+    }
+
+    function loadState(showToast) {
+      if (showToast) showBanner('', false);
+      google.script.run
+        .withSuccessHandler(function(state) {
+          applyState(state);
+          if (showToast && state.connected) showBanner('Credit balances refreshed.', false);
+        })
+        .withFailureHandler(function(err) {
+          showBanner(err.message || String(err), true);
+        })
+        .getSidebarState();
+    }
+
+    function handleConnect() {
+      var key = document.getElementById('apiKeyInput').value.trim();
+      var enableFormulas = document.getElementById('enableFormulasConnect').checked;
+      if (!key) {
+        showBanner('Paste your ProWebLook API Key first.', true);
+        return;
+      }
+      var btn = document.getElementById('connectBtn');
+      btn.disabled = true;
+      btn.textContent = 'Verifying Key...';
+      showBanner('', false);
+
+      google.script.run
+        .withSuccessHandler(function(state) {
+          btn.disabled = false;
+          btn.textContent = 'Connect Account';
+          document.getElementById('apiKeyInput').value = '';
+          applyState(state);
+          showBanner('Connected to ProWebLook!', false);
+        })
+        .withFailureHandler(function(err) {
+          btn.disabled = false;
+          btn.textContent = 'Connect Account';
+          showBanner(err.message || String(err), true);
+        })
+        .saveApiKey(key, enableFormulas);
+    }
+
+    function handleFormulaToggle(checked) {
+      google.script.run
+        .withSuccessHandler(function() {
+          showBanner(checked ? 'Sheet formulas enabled for this document.' : 'Sheet formulas disabled for this document.', false);
+        })
+        .withFailureHandler(function(err) {
+          showBanner(err.message || String(err), true);
+        })
+        .setFormulaAccess(checked);
+    }
+
+    function handleDisconnect() {
+      google.script.run
+        .withSuccessHandler(function(state) {
+          applyState(state);
+          showBanner('Disconnected API key.', false);
+        })
+        .withFailureHandler(function(err) {
+          showBanner(err.message || String(err), true);
+        })
+        .disconnectApiKey();
+    }
+
+    function startBulkRun() {
+      var op = document.getElementById('bulkOp').value;
+      var hasHeader = document.getElementById('hasHeaderChk').checked;
+      var skipExisting = document.getElementById('skipExistingChk').checked;
+      var countryCode = document.getElementById('countryInput').value.trim().toUpperCase();
+
+      stopRequested = false;
+      showBanner('', false);
+      document.getElementById('runBulkBtn').disabled = true;
+      document.getElementById('stopBulkBtn').style.display = 'inline-flex';
+      document.getElementById('progressWrap').style.display = 'block';
+      updateProgressUI(0, 1, 'Reading selection...');
+
+      google.script.run
+        .withSuccessHandler(function(meta) {
+          runNextChunk({
+            sheetName: meta.sheetName,
+            col: meta.col,
+            startRow: meta.startRow,
+            totalRows: meta.totalRows,
+            offset: 0,
+            limit: 15,
+            operation: op,
+            countryCode: countryCode,
+            skipExisting: skipExisting,
+            verifiedSoFar: 0,
+            skippedSoFar: 0
+          });
+        })
+        .withFailureHandler(function(err) {
+          finishBulkUI();
+          showBanner(err.message || String(err), true);
+        })
+        .prepareBulkSelection(op, hasHeader);
+    }
+
+    function runNextChunk(state) {
+      if (stopRequested) {
+        finishBulkUI();
+        showBanner('Stopped after ' + state.verifiedSoFar + ' verified row(s).', false);
+        return;
+      }
+      updateProgressUI(state.offset, state.totalRows, 'Verifying row ' + Math.min(state.offset + 1, state.totalRows) + ' of ' + state.totalRows + '...');
+
+      google.script.run
+        .withSuccessHandler(function(res) {
+          state.verifiedSoFar += (res.processed || 0);
+          state.skippedSoFar += (res.skipped || 0);
+          state.offset = res.nextOffset;
+
+          if (res.balances) {
+            renderBalances(res.balances);
+          }
+
+          if (res.done || state.offset >= state.totalRows) {
+            updateProgressUI(state.totalRows, state.totalRows, 'Completed!');
+            finishBulkUI();
+            showBanner('Done! Verified ' + state.verifiedSoFar + ' row(s)' + (state.skippedSoFar ? ' (' + state.skippedSoFar + ' skipped).' : '.'), false);
+          } else {
+            runNextChunk(state);
+          }
+        })
+        .withFailureHandler(function(err) {
+          finishBulkUI();
+          showBanner(err.message || String(err), true);
+        })
+        .processBulkChunk(state);
+    }
+
+    function stopBulkRun() {
+      stopRequested = true;
+      document.getElementById('progressLabel').textContent = 'Stopping...';
+    }
+
+    function updateProgressUI(done, total, label) {
+      var pct = total > 0 ? Math.min(100, Math.round((done / total) * 100)) : 0;
+      document.getElementById('progressFill').style.width = pct + '%';
+      document.getElementById('progressLabel').textContent = label;
+      document.getElementById('progressPct').textContent = pct + '%';
+    }
+
+    function finishBulkUI() {
+      document.getElementById('runBulkBtn').disabled = false;
+      document.getElementById('stopBulkBtn').style.display = 'none';
+    }
+
+    function handleInsertDemo() {
+      showBanner('', false);
+      google.script.run
+        .withSuccessHandler(function(res) {
+          showBanner('Inserted tab "' + res.sheetName + '". Highlight B2:B4 and click Verify Selected Cells!', false);
+        })
+        .withFailureHandler(function(err) {
+          showBanner(err.message || String(err), true);
+        })
+        .insertDemoSheet();
+    }
+
+    function copyText(txt, btn) {
+      navigator.clipboard.writeText(txt).then(function() {
+        var orig = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(function() { btn.textContent = orig; }, 1200);
+      });
+    }
+
+    loadState(false);
+  </script>
+</body>
+</html>
