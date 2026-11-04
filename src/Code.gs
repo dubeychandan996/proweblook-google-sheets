@@ -29,22 +29,14 @@ function onInstall(e) {
 }
 
 /**
- * Adds the ProWebLook menu when the spreadsheet opens.
+ * Adds the ProWebLook menu under Extensions -> ProWebLook (Editor Add-on standard).
+ * Uses only createAddonMenu().addItem() so AuthMode.NONE never throws on sheet load.
  * @param {Object} e Apps Script open event.
  */
 function onOpen(e) {
-  var ui = SpreadsheetApp.getUi();
-  var menu = ui.createAddonMenu ? ui.createAddonMenu() : ui.createMenu('ProWebLook');
-
-  // When running as a container-bound script (Extensions -> Apps Script), also attach a top-level menu.
-  if (e && e.authMode === ScriptApp.AuthMode.NONE) {
-    menu.addItem('Open ProWebLook Sidebar', 'showProWebLookSidebar');
-    menu.addToUi();
-    return;
-  }
-
-  ui.createMenu('ProWebLook')
-    .addItem('Open Sidebar (Connect & Bulk Verify)', 'showProWebLookSidebar')
+  SpreadsheetApp.getUi()
+    .createAddonMenu()
+    .addItem('Open Lead Verifier Sidebar', 'showProWebLookSidebar')
     .addSeparator()
     .addItem('Bulk Verify Selected Emails', 'menuBulkVerifyEmails')
     .addItem('Bulk Validate Selected Phones', 'menuBulkValidatePhones')
@@ -253,6 +245,33 @@ function PROWEBLOOK_WHATSAPP(phone, fullDetails) {
 }
 
 /**
+ * Short alias for PROWEBLOOK_VERIFY_EMAIL — verifies an email address (or column range).
+ * Returns "deliverable", "undeliverable", or "unknown" (or 3 columns when fullDetails is TRUE).
+ *
+ * @param {string|Array<Array<string>>} email Email address or single-column range (e.g. A2 or A2:A20).
+ * @param {boolean=} fullDetails Optional. Set TRUE to return [verdict, reason, normalized_email].
+ * @return {string|Array<Array<string>>} Verification verdict or detail columns.
+ * @customfunction
+ */
+function PROWEBLOOK_EMAIL(email, fullDetails) {
+  return PROWEBLOOK_VERIFY_EMAIL(email, fullDetails);
+}
+
+/**
+ * Short alias for PROWEBLOOK_VALIDATE_PHONE — validates a phone number (or column range).
+ * Returns "valid", "invalid", or "unknown" (or 5 columns when fullDetails is TRUE).
+ *
+ * @param {string|number|Array<Array<string>>} phone Phone number in E.164 (+12025550123) or national format with countryCode.
+ * @param {string=} countryCode Optional 2-letter ISO country code (e.g. "US", "IN", "GB") for national numbers.
+ * @param {boolean=} fullDetails Optional. Set TRUE to return [verdict, linetype, carrier, country_code, e164_number].
+ * @return {string|Array<Array<string>>} Phone validation verdict or detail columns.
+ * @customfunction
+ */
+function PROWEBLOOK_PHONE(phone, countryCode, fullDetails) {
+  return PROWEBLOOK_VALIDATE_PHONE(phone, countryCode, fullDetails);
+}
+
+/**
  * Alias for PROWEBLOOK_WHATSAPP — checks if a phone number has an active WhatsApp account.
  *
  * @param {string|number|Array<Array<string>>} phone Phone number in international E.164 format (e.g. "+14155552671").
@@ -442,7 +461,7 @@ function processBulkChunk(job) {
   }
 
   var rowOffset = Number(job.offset) || 0;
-  var limit = Math.min(20, Math.max(1, Number(job.limit) || 15));
+  var limit = Math.min(30, Math.max(1, Number(job.limit) || 25));
   var remaining = Number(job.totalRows) - rowOffset;
   if (remaining <= 0) {
     return { processed: 0, skipped: 0, done: true };
@@ -456,11 +475,15 @@ function processBulkChunk(job) {
 
   var inputValues = sheet.getRange(currentStartRow, col, batchCount, 1).getValues();
   var existingOutputs = sheet.getRange(currentStartRow, col + 1, batchCount, outputCols).getValues();
+  var existingBgs = sheet.getRange(currentStartRow, col + 1, batchCount, outputCols).getBackgrounds
+    ? sheet.getRange(currentStartRow, col + 1, batchCount, outputCols).getBackgrounds()
+    : Array.from({ length: batchCount }, function() { return fillRow_(outputCols, null); });
 
   var outValues = [];
   var outColors = [];
   var pendingCalls = [];
   var skippedCount = 0;
+  var haltedReason = '';
 
   for (var i = 0; i < batchCount; i++) {
     var rawCell = inputValues[i][0];
@@ -487,19 +510,26 @@ function processBulkChunk(job) {
       outColors.push(fillRow_(outputCols, verdictColor_(spec.row[0])));
       skippedCount++;
     } else {
-      outValues.push(null);
-      outColors.push(null);
+      outValues.push(existingOutputs[i]);
+      outColors.push(existingBgs[i]);
       pendingCalls.push({ index: i, operation: spec.operation, payload: spec.payload, format: spec.format });
     }
   }
 
+  var actualProcessed = 0;
   if (pendingCalls.length > 0) {
     var apiResults = executeBatchApiCalls_(pendingCalls, key, true);
     for (var j = 0; j < pendingCalls.length; j++) {
       var item = pendingCalls[j];
-      var formattedRow = item.format(apiResults[j]);
+      var apiRes = apiResults[j];
+      if (!apiRes.ok && apiRes.code === 'insufficient_credit') {
+        haltedReason = 'insufficient_credit';
+        continue;
+      }
+      var formattedRow = item.format(apiRes);
       outValues[item.index] = formattedRow;
       outColors[item.index] = fillRow_(outputCols, verdictColor_(formattedRow[0]));
+      actualProcessed++;
     }
   }
 
@@ -508,9 +538,9 @@ function processBulkChunk(job) {
   outRange.setBackgrounds(outColors);
 
   var nextOffset = rowOffset + batchCount;
-  var done = nextOffset >= Number(job.totalRows);
+  var done = Boolean(haltedReason) || nextOffset >= Number(job.totalRows);
   var balances = null;
-  if (done) {
+  if (done || nextOffset % 100 === 0) {
     var balRes = callProWebLookApi_('get_balance', {}, key, false);
     if (balRes.ok) {
       balances = balRes.data;
@@ -518,10 +548,11 @@ function processBulkChunk(job) {
   }
 
   return {
-    processed: batchCount - skippedCount,
+    processed: actualProcessed,
     skipped: skippedCount,
     nextOffset: nextOffset,
     done: done,
+    haltedReason: haltedReason,
     balances: balances
   };
 }

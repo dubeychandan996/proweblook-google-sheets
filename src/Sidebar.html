@@ -379,12 +379,12 @@
       <span>3. Sheet Formulas</span>
     </div>
     <div class="formula-item">
-      <span class="formula-code">=PROWEBLOOK_VERIFY_EMAIL(A2)</span>
-      <button class="copy-btn" onclick="copyText('=PROWEBLOOK_VERIFY_EMAIL(A2)', this)">Copy</button>
+      <span class="formula-code">=PROWEBLOOK_EMAIL(A2)</span>
+      <button class="copy-btn" onclick="copyText('=PROWEBLOOK_EMAIL(A2)', this)">Copy</button>
     </div>
     <div class="formula-item">
-      <span class="formula-code">=PROWEBLOOK_VALIDATE_PHONE(B2, "US", TRUE)</span>
-      <button class="copy-btn" onclick="copyText('=PROWEBLOOK_VALIDATE_PHONE(B2, &quot;US&quot;, TRUE)', this)">Copy</button>
+      <span class="formula-code">=PROWEBLOOK_PHONE(B2, "US", TRUE)</span>
+      <button class="copy-btn" onclick="copyText('=PROWEBLOOK_PHONE(B2, &quot;US&quot;, TRUE)', this)">Copy</button>
     </div>
     <div class="formula-item">
       <span class="formula-code">=PROWEBLOOK_WHATSAPP(B2)</span>
@@ -529,7 +529,7 @@
             startRow: meta.startRow,
             totalRows: meta.totalRows,
             offset: 0,
-            limit: 15,
+            limit: 25,
             operation: op,
             countryCode: countryCode,
             skipExisting: skipExisting,
@@ -562,7 +562,10 @@
             renderBalances(res.balances);
           }
 
-          if (res.done || state.offset >= state.totalRows) {
+          if (res.haltedReason === 'insufficient_credit') {
+            finishBulkUI();
+            showBanner('Paused after ' + state.verifiedSoFar + ' verified row(s): Insufficient ProWebLook credits. Top up at proweblook.com and click Verify again to resume.', true);
+          } else if (res.done || state.offset >= state.totalRows) {
             updateProgressUI(state.totalRows, state.totalRows, 'Completed!');
             finishBulkUI();
             showBanner('Done! Verified ' + state.verifiedSoFar + ' row(s)' + (state.skippedSoFar ? ' (' + state.skippedSoFar + ' skipped).' : '.'), false);

@@ -201,6 +201,11 @@ function createMockAppsScriptEnv({ throwOnUserProps = false } = {}) {
       }),
       getUi: () => ({
         ButtonSet: { OK: 'OK' },
+        createAddonMenu: () => ({
+          addItem: function() { return this; },
+          addSeparator: function() { return this; },
+          addToUi: function() {}
+        }),
         createMenu: () => ({
           addItem: function() { return this; },
           addSeparator: function() { return this; },
@@ -332,6 +337,9 @@ assert.equal(env.gridBgs[2][2], '#fce8e6');
 
 const demoRes = env.sandbox.insertDemoSheet();
 assert.equal(demoRes.sheetName, 'ProWebLook Demo');
-console.log('✓ 8. Sidebar Bulk Enricher (headers, skipExisting, status colors, and Demo Sheet) verified');
+env.sandbox.onOpen({ authMode: 'NONE' });
+assert.equal(cfEnv.sandbox.PROWEBLOOK_EMAIL('support@proweblook.com'), 'deliverable');
+assert.equal(cfEnv.sandbox.PROWEBLOOK_PHONE(12025550123), 'valid');
+console.log('✓ 8. Sidebar Bulk Enricher, onOpen Add-on menu, and short aliases (PROWEBLOOK_EMAIL / PROWEBLOOK_PHONE) verified');
 
 console.log('\nALL 8 TEST SUITES PASSED!');
